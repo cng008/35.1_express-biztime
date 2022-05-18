@@ -38,18 +38,6 @@ router.get('/:id', async (req, res, next) => {
       throw new ExpressError(`No such invoice: ${id}`, 404);
     }
     const data = result.rows[0];
-    const invoice = {
-      id: data.id,
-      company: {
-        code: data.comp_code,
-        name: data.name,
-        description: data.description
-      },
-      amt: data.amt,
-      paid: data.paid,
-      add_date: data.add_date,
-      paid_date: data.paid_date
-    };
 
     return res.json({ invoice: invoice });
   } catch (e) {
@@ -78,45 +66,27 @@ router.post('/', async (req, res, next) => {
 
 /** Put invoice: Edit existing invoice.
  * Returns: {invoice: {id, comp_code, amt, paid, add_date, paid_date}}
- * Needs to be passed in a JSON body of {amt}
+ * Needs to be passed in a JSON body of {amt, paid}
  * If invoice cannot be found, returns a 404.
  * If paying unpaid invoice, set paid_date; if marking as unpaid, clear paid_date.
  */
 router.put('/:id', async (req, res, next) => {
   try {
-    const { amt, paid } = req.body;
+    const { amt, paid, paidDate } = req.body;
     const { id } = req.params;
-    let paidDate = null;
-
-    const currResult = await db.query(
-      `SELECT paid
-         FROM invoices
-         WHERE id = $1`,
-      [id]
-    );
-    if (currResult.rows.length === 0) {
-      throw new ExpressError(`Can't update invoice with id ${id}`, 404);
-    }
-
-    const currPaidDate = currResult.rows[0].paid_date;
-
-    if (!currPaidDate && paid) {
-      paidDate = new Date();
-    } else if (!paid) {
-      paidDate = null;
-    } else {
-      paidDate = currPaidDate;
-    }
 
     const result = await db.query(
       `UPDATE invoices
-         SET amt=$1, paid=$2, paid_date=$3
-         WHERE id=$4
-         RETURNING id, comp_code, amt, paid, add_date, paid_date`,
+        SET amt=$1, paid=$2, paid_date=$3
+        WHERE id=$4
+        RETURNING id, amt, paid, paid_date`,
       [amt, paid, paidDate, id]
     );
-
-    return res.json({ invoice: result.rows[0] });
+    if (result.rows.length === 0) {
+      throw new ExpressError(`No such invoice: ${id}`, 404);
+    } else {
+      return res.json({ invoice: result.rows[0] });
+    }
   } catch (e) {
     return next(e);
   }
