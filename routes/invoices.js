@@ -23,7 +23,6 @@ router.get('/', async (req, res, next) => {
 
 /** Get invoice:
  * Returns obj {invoice: {id, amt, paid, add_date, paid_date, company: {code, name, description}}}
- * If invoice cannot be found, returns 404.
  */
 router.get('/:id', async (req, res, next) => {
   try {
@@ -43,6 +42,7 @@ router.get('/:id', async (req, res, next) => {
       [id]
     );
 
+    // If invoice cannot be found, returns 404
     if (result.rows.length === 0) {
       throw new ExpressError(`No such invoice: ${id}`, 404);
     }
@@ -89,8 +89,6 @@ router.post('/', async (req, res, next) => {
 /** Put invoice: Edit existing invoice.
  * Returns: {invoice: {id, comp_code, amt, paid, add_date, paid_date}}
  * Needs to be passed in a JSON body of {amt, paid}
- * If invoice cannot be found, returns a 404.
- * If paying unpaid invoice, set paid_date; if marking as unpaid, clear paid_date.
  */
 router.put('/:id', async (req, res, next) => {
   try {
@@ -105,6 +103,7 @@ router.put('/:id', async (req, res, next) => {
       [id]
     );
 
+    // If invoice cannot be found, returns a 404
     if (currResult.rows.length === 0) {
       throw new ExpressError(`No such invoice: ${id}`, 404);
     }
@@ -112,10 +111,13 @@ router.put('/:id', async (req, res, next) => {
     const currPaidDate = currResult.rows[0].paid_date;
 
     if (!currPaidDate && paid) {
+      // If paying unpaid invoice: sets paid_date to today
       paidDate = new Date();
     } else if (!paid) {
+      // If marking as unpaid, clear paid_date
       paidDate = null;
     } else {
+      // Else: keep current paid_date
       paidDate = currPaidDate;
     }
 
@@ -135,7 +137,6 @@ router.put('/:id', async (req, res, next) => {
 
 /** Delete invoice:
  * Returns {status: "deleted"}
- * If invoice cannot be found, returns a 404.
  */
 router.delete('/:id', async (req, res, next) => {
   try {
@@ -147,6 +148,8 @@ router.delete('/:id', async (req, res, next) => {
         RETURNING id`,
       [id]
     );
+
+    // If invoice cannot be found, returns a 404
     if (result.rows.length == 0) {
       throw new ExpressError(`No such invoice: ${id}`, 404);
     } else {

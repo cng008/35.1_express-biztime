@@ -55,13 +55,13 @@ describe('POST /', () => {
   test('Add new invoice', async () => {
     const response = await request(app)
       .post('/invoices')
-      .send({ amt: 400, comp_code: 'ibm' });
+      .send({ amt: 400000, comp_code: 'ibm' });
 
     expect(response.body).toEqual({
       invoice: {
         id: 4,
         comp_code: 'ibm',
-        amt: 400,
+        amt: 400000,
         add_date: expect.any(String),
         paid: false,
         paid_date: null

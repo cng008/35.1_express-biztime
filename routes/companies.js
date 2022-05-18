@@ -24,11 +24,10 @@ router.get('/', async (req, res, next) => {
 
 /** Get company:
  * Return obj of company: {company: {code, name, description, invoices: [id, ...]}}
- * If company cannot be found, return a 404 status response
  */
 router.get('/:code', async (req, res, next) => {
   try {
-    let code = req.params.code;
+    const code = req.params.code;
 
     const compResult = await db.query(
       `SELECT code, name, description
@@ -44,6 +43,7 @@ router.get('/:code', async (req, res, next) => {
       [code]
     );
 
+    // If company cannot be found, return a 404 status response
     if (compResult.rows.length === 0) {
       throw new ExpressError(`No such company: ${code}`, 404);
     }
@@ -83,7 +83,6 @@ router.post('/', async (req, res, next) => {
 /** Put company: Edit existing company.
  * Returns update company object: {company: {code, name, description}}
  * Needs to be given JSON like: {name, description}
- * Should return 404 if company cannot be found.
  */
 router.put('/:code', async (req, res, next) => {
   try {
@@ -96,6 +95,8 @@ router.put('/:code', async (req, res, next) => {
         RETURNING code, name, description`,
       [name, description, code]
     );
+
+    // If company cannot be found, return a 404 status response
     if (result.rows.length === 0) {
       throw new ExpressError(`No such company: ${code}`, 404);
     }
@@ -107,7 +108,6 @@ router.put('/:code', async (req, res, next) => {
 
 /** Delete company:
  * Returns {status: "deleted"}
- * Should return 404 if company cannot be found.
  */
 router.delete('/:code', async function (req, res, next) {
   try {
@@ -118,6 +118,8 @@ router.delete('/:code', async function (req, res, next) {
         RETURNING code`,
       [code]
     );
+
+    // If company cannot be found, return a 404 status response
     if (result.rows.length == 0) {
       throw new ExpressError(`No such company: ${code}`, 404);
     } else {
